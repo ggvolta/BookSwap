@@ -157,7 +157,8 @@ app.get('/api/categories', requireApiLogin, asyncHandler(async (req, res) => {
 
 // READ available books and search them
 app.get('/api/books', requireApiLogin, asyncHandler(async (req, res) => {
-  const search = `%${cleanText(req.query.search)}%`;
+  const searchTerm = cleanText(req.query.search).slice(0, 100);
+  const search = `%${searchTerm}%`;
   const [books] = await pool.execute(
     `SELECT books.*, users.name AS owner_name, users.department AS owner_department,
             (books.owner_id = ?) AS is_owner
@@ -189,6 +190,9 @@ app.post('/api/books', requireApiLogin, asyncHandler(async (req, res) => {
   if (!title || !author || !category || !book_condition) {
     return res.status(400).json({ message: 'Title, author, category and condition are required.' });
   }
+  if (cleanText(title).length > 150 || cleanText(author).length > 120 || cleanText(category).length > 80 || cleanText(description).length > 1000) {
+    return res.status(400).json({ message: 'One or more book fields are too long.' });
+  }
   if (!isValidBookCondition(book_condition)) {
     return res.status(400).json({ message: 'Please select a valid book condition.' });
   }
@@ -208,6 +212,9 @@ app.put('/api/books/:id', requireApiLogin, asyncHandler(async (req, res) => {
   if (!bookId) return res.status(400).json({ message: 'Invalid book ID.' });
   if (!title || !author || !category || !book_condition) {
     return res.status(400).json({ message: 'All book fields except description are required.' });
+  }
+  if (cleanText(title).length > 150 || cleanText(author).length > 120 || cleanText(category).length > 80 || cleanText(description).length > 1000) {
+    return res.status(400).json({ message: 'One or more book fields are too long.' });
   }
   if (!isValidBookCondition(book_condition)) {
     return res.status(400).json({ message: 'Please select a valid book condition.' });
