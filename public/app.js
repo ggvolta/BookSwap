@@ -42,7 +42,22 @@ function bookEmoji(category = '') {
     Science: '🔭',
     Fiction: '✨',
     Business: '💼',
-    'Self Development': '🌱'
+    'Self Development': '🌱',
+    'Islamic Book': '🕌',
+    History: '🏛️',
+    Mathematics: '➗',
+    Engineering: '⚙️',
+    Literature: '🪶',
+    Biography: '👤',
+    Technology: '🤖',
+    Economics: '📈',
+    'Language Learning': '🗣️',
+    Health: '🩺',
+    Philosophy: '💭',
+    "Children's Books": '🧸',
+    'Bangladesh Studies': '🇧🇩',
+    Law: '⚖️',
+    Poetry: '📝'
   };
   return icons[category] || '📘';
 }
@@ -58,6 +73,28 @@ function emptyState(title, text) {
       <strong>${escapeHtml(title)}</strong>
       <p>${escapeHtml(text)}</p>
     </div>`;
+}
+
+async function loadCategories() {
+  try {
+    const categories = await api('/api/categories');
+    if (!categories) return;
+
+    const quickSearches = document.getElementById('quickSearches');
+    quickSearches.innerHTML = `
+      <span>Quick search:</span>
+      <button class="quick-search" data-search="">All books</button>
+      ${categories.map((category) => `
+        <button class="quick-search" data-search="${escapeHtml(category)}">${escapeHtml(category)}</button>
+      `).join('')}
+    `;
+
+    document.getElementById('categoryOptions').innerHTML = categories
+      .map((category) => `<option value="${escapeHtml(category)}"></option>`)
+      .join('');
+  } catch (error) {
+    showMessage(error.message);
+  }
 }
 
 function showSection(sectionId) {
@@ -99,17 +136,18 @@ async function setupPage() {
     if (event.key === 'Enter') loadBooks();
   });
 
-  document.querySelectorAll('.quick-search').forEach((button) => {
-    button.addEventListener('click', () => {
-      document.getElementById('search').value = button.dataset.search;
-      loadBooks();
-    });
+  document.getElementById('quickSearches').addEventListener('click', (event) => {
+    const button = event.target.closest('.quick-search');
+    if (!button) return;
+    document.getElementById('search').value = button.dataset.search;
+    loadBooks();
   });
 
   document.getElementById('bookForm').addEventListener('submit', saveBook);
   document.getElementById('cancelEdit').addEventListener('click', resetBookForm);
 
   document.getElementById('search').value = localStorage.getItem('bookSearch') || '';
+  await loadCategories();
   showSection(localStorage.getItem('lastSection') || 'browseSection');
 }
 
@@ -148,7 +186,9 @@ async function loadBooks() {
               <small>${escapeHtml(book.owner_department)}</small>
             </div>
           </div>
-          <button class="full-button" onclick="requestBook(${book.id})">Request this book</button>
+          ${Number(book.is_owner) === 1
+            ? '<button class="full-button owner-book-button" disabled>Your published book</button>'
+            : `<button class="full-button" onclick="requestBook(${book.id})">Request this book</button>`}
         </div>
       </article>
     `).join('');
@@ -223,9 +263,20 @@ async function saveBook(event) {
       method: id ? 'PUT' : 'POST',
       body: JSON.stringify(data)
     });
-    showMessage(result.message, true);
+    const wasNewBook = !id;
     resetBookForm();
     await loadMyBooks();
+    await loadCategories();
+
+    if (wasNewBook) {
+      document.getElementById('search').value = '';
+      localStorage.setItem('bookSearch', '');
+      showSection('browseSection');
+      showMessage('Book published successfully. It is now visible in Browse.', true);
+    } else {
+      await loadBooks();
+      showMessage(result.message, true);
+    }
   } catch (error) {
     showMessage(error.message);
   }
@@ -261,6 +312,7 @@ async function deleteBook(id) {
     const result = await api(`/api/books/${id}`, { method: 'DELETE' });
     showMessage(result.message, true);
     await loadMyBooks();
+    await loadCategories();
   } catch (error) {
     showMessage(error.message);
   }
@@ -300,6 +352,9 @@ async function loadRequests() {
         </div>
         <p><b>Owner:</b> ${escapeHtml(item.owner_name)}</p>
         <p><b>Department:</b> ${escapeHtml(item.owner_department)}</p>
+        ${item.status === 'pending' ? `
+          <button class="danger small" onclick="changeRequest(${item.id}, 'cancel')">Cancel request</button>
+        ` : ''}
       </article>
     `).join('') : emptyState('No outgoing requests', 'Request a book from the Browse page.');
   } catch (error) {

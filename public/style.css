@@ -17,7 +17,10 @@
 * { box-sizing: border-box; }
 
 body {
+  min-height: 100vh;
   margin: 0;
+  display: flex;
+  flex-direction: column;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: var(--bg);
   color: var(--text);
@@ -36,9 +39,11 @@ h2 { line-height: 1.2; }
 /* Authentication pages */
 .auth-page {
   min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 30px 30px 0;
   background:
     radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.17), transparent 35%),
     radial-gradient(circle at 85% 85%, rgba(14, 165, 233, 0.12), transparent 35%),
@@ -47,6 +52,7 @@ h2 { line-height: 1.2; }
 
 .auth-layout {
   width: min(1050px, 100%);
+  margin: auto 0 30px;
   min-height: 620px;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -153,6 +159,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 textarea { min-height: 105px; resize: vertical; }
+.field-help { display: block; margin-top: 6px; color: var(--muted); font-size: 0.8rem; }
 
 .form-grid {
   display: grid;
@@ -173,6 +180,13 @@ button {
 button:hover:not(:disabled) { background: var(--primary-dark); transform: translateY(-1px); }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
 .full-button { width: 100%; margin-top: 18px; }
+
+.owner-book-button:disabled {
+  opacity: 1;
+  color: #166534;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+}
 button.secondary { background: #596579; }
 button.danger { background: var(--danger); }
 button.small { padding: 8px 12px; font-size: 0.87rem; }
@@ -217,7 +231,7 @@ button.small { padding: 8px 12px; font-size: 0.87rem; }
 .user-area strong, .user-area small { display: block; }
 .user-area small { color: #aeb8ce; max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.container { width: min(1160px, 92%); margin: 34px auto 70px; }
+.container { width: min(1160px, 92%); flex: 1; margin: 34px auto 70px; }
 .hidden { display: none !important; }
 
 .floating-message {
@@ -323,6 +337,7 @@ button.small { padding: 8px 12px; font-size: 0.87rem; }
 .status.available, .status.approved, .status.returned { color: #166534; background: var(--green-soft); }
 .status.pending, .status.borrowed { color: #92400e; background: #fef3c7; }
 .status.rejected { color: #991b1b; background: var(--danger-soft); }
+.status.cancelled { color: #475569; background: #e2e8f0; }
 
 .owner-row { display: flex; gap: 10px; align-items: center; margin-top: 17px; padding-top: 14px; border-top: 1px solid var(--border); }
 .owner-row .avatar { width: 35px; height: 35px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 50%; color: white; background: var(--primary); font-weight: 800; }
@@ -383,4 +398,105 @@ button.small { padding: 8px 12px; font-size: 0.87rem; }
   .user-area small { display: none; }
   .compact-card { grid-template-columns: 1fr; }
   .small-cover { min-height: 120px; border: 0; border-bottom: 1px solid var(--border); }
+}
+
+
+/* Footer */
+.site-footer {
+  width: 100%;
+  margin-top: auto;
+  color: #d7deec;
+  background: #11182b;
+}
+
+.footer-inner {
+  width: min(1160px, 92%);
+  margin: auto;
+  display: grid;
+  grid-template-columns: 1.35fr 1fr 1fr;
+  gap: 34px;
+  padding: 38px 0 28px;
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 10px;
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 850;
+}
+
+.footer-brand span { font-size: 1.5rem; }
+.site-footer h3 { margin-bottom: 10px; color: white; font-size: 1rem; }
+.site-footer p { margin-bottom: 6px; color: #aeb8ce; font-size: 0.9rem; }
+
+.footer-bottom {
+  padding: 15px 4%;
+  text-align: center;
+  color: #8e9ab2;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.82rem;
+}
+
+.auth-page .site-footer {
+  width: 100vw;
+  flex: 0 0 auto;
+}
+
+
+/* Responsive refinements */
+@media (max-width: 900px) {
+  .footer-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .footer-inner > div:first-child { grid-column: 1 / -1; }
+  .book-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 650px) {
+  .auth-page { padding: 12px 12px 0; }
+  .auth-layout { margin-bottom: 18px; }
+  .nav-inner { width: calc(100% - 24px); gap: 10px; }
+  .light-logo { font-size: 1.1rem; }
+  .user-area { gap: 8px; }
+  .user-area strong { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nav-links { padding-bottom: 4px; scrollbar-width: thin; }
+  .nav-button { flex: 0 0 auto; white-space: nowrap; }
+  .container { width: calc(100% - 24px); margin: 20px auto 45px; }
+  .hero { padding: 26px 22px; border-radius: 16px; }
+  .hero h1 { font-size: clamp(1.9rem, 9vw, 2.45rem); }
+  .book-stat { justify-self: center; }
+  .quick-searches {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    align-items: center;
+    padding: 2px 0 10px;
+    scrollbar-width: thin;
+  }
+  .quick-searches > span,
+  .quick-search { flex: 0 0 auto; }
+  .book-grid { grid-template-columns: 1fr; }
+  .book-card:hover { transform: none; }
+  .book-cover { min-height: 120px; }
+  .description { min-height: auto; }
+  .section-heading { align-items: flex-start; }
+  .request-heading { flex-direction: column; }
+  .request-card .button-row > button { flex: 1; }
+  .footer-inner { width: calc(100% - 36px); grid-template-columns: 1fr; gap: 20px; padding: 30px 0 24px; }
+  .footer-inner > div:first-child { grid-column: auto; }
+}
+
+@media (max-width: 420px) {
+  .auth-card { padding: 24px 18px; }
+  .topbar { position: static; }
+  .user-area strong { max-width: 90px; }
+  .outline-button.small { padding: 7px 9px; }
+  .hero { padding: 22px 18px; }
+  .book-stat { min-width: 105px; min-height: 105px; }
+  .book-stat strong { font-size: 2.5rem; }
+  .form-card, .request-card, .empty-state { padding: 17px; }
+  .book-content { padding: 16px; }
+  .button-row { flex-direction: column; }
+  .button-row button { width: 100%; }
+  .fine-box { align-items: flex-start; gap: 8px; flex-direction: column; }
 }

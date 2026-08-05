@@ -34,7 +34,7 @@
         <div>
           <p class="eyebrow">Explore the community library</p>
           <h1>Find a book for your next class or weekend.</h1>
-          <p>Search by title, author, category or a word from the description.</p>
+          <p>Search by title, author, category or description. Your own published books are also shown and clearly marked.</p>
         </div>
         <div class="book-stat">
           <strong id="bookCount">0</strong>
@@ -43,15 +43,12 @@
       </div>
 
       <div class="search-panel">
-        <input id="search" type="search" placeholder="Try Clean Code, Fiction, Database...">
+        <input id="search" type="search" placeholder="Try Clean Code, Islamic Book, Fiction...">
         <button id="searchBtn">Search books</button>
       </div>
 
-      <div class="quick-searches">
+      <div id="quickSearches" class="quick-searches" aria-label="Book category quick search">
         <span>Quick search:</span>
-        <button class="quick-search" data-search="Programming">Programming</button>
-        <button class="quick-search" data-search="Academic">Academic</button>
-        <button class="quick-search" data-search="Fiction">Fiction</button>
         <button class="quick-search" data-search="">All books</button>
       </div>
 
@@ -82,16 +79,9 @@
             </div>
             <div>
               <label for="category">Category</label>
-              <select id="category" required>
-                <option value="">Select category</option>
-                <option>Academic</option>
-                <option>Programming</option>
-                <option>Science</option>
-                <option>Fiction</option>
-                <option>Business</option>
-                <option>Self Development</option>
-                <option>Other</option>
-              </select>
+              <input id="category" type="text" list="categoryOptions" maxlength="80" placeholder="Choose or type a category" required>
+              <datalist id="categoryOptions"></datalist>
+              <small class="field-help">You may select an existing category or type a new one.</small>
             </div>
             <div>
               <label for="condition">Condition</label>
@@ -123,7 +113,7 @@
         <div>
           <p class="eyebrow">Borrow workflow</p>
           <h1>Borrow Requests</h1>
-          <p>Approve or reject requests for your books and track the requests you sent.</p>
+          <p>Approve or reject requests for your books, and cancel your own pending requests.</p>
         </div>
       </div>
 
@@ -160,6 +150,25 @@
       </div>
     </section>
   </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <div class="footer-brand"><span>📖</span> BookSwap</div>
+        <p>A simple campus platform where students can publish, discover and borrow books from one another.</p>
+      </div>
+      <div>
+        <h3>Website features</h3>
+        <p>Browse books • Send requests • Track loans • Check fines</p>
+      </div>
+      <div>
+        <h3>Project information</h3>
+        <p>CSE 3200 Web Programming Sessional</p>
+        <p>Late fine: Tk 10 per day</p>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 BookSwap. Built for educational purposes.</div>
+  </footer>
 
   <script src="/app.js"></script>
 </body>

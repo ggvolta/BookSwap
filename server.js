@@ -130,15 +130,23 @@ app.post('/api/logout', requireApiLogin, (req, res) => {
 
 app.get('/api/me', requireApiLogin, (req, res) => res.json(req.session.user));
 
+// READ every category currently used by a book
+app.get('/api/categories', requireApiLogin, asyncHandler(async (req, res) => {
+  const [rows] = await pool.execute(
+    "SELECT DISTINCT category FROM books WHERE category <> '' ORDER BY category ASC"
+  );
+  res.json(rows.map((row) => row.category));
+}));
+
 // READ available books and search them
 app.get('/api/books', requireApiLogin, asyncHandler(async (req, res) => {
   const search = `%${cleanText(req.query.search)}%`;
   const [books] = await pool.execute(
-    `SELECT books.*, users.name AS owner_name, users.department AS owner_department
+    `SELECT books.*, users.name AS owner_name, users.department AS owner_department,
+            (books.owner_id = ?) AS is_owner
      FROM books
      JOIN users ON users.id = books.owner_id
      WHERE books.status = 'available'
-       AND books.owner_id <> ?
        AND (
          books.title LIKE ? OR books.author LIKE ? OR
          books.category LIKE ? OR books.description LIKE ?
@@ -260,11 +268,26 @@ app.get('/api/requests', requireApiLogin, asyncHandler(async (req, res) => {
   res.json({ incoming, outgoing });
 }));
 
-// UPDATE a request: approve or reject
+// UPDATE a request: approve, reject or cancel
 app.put('/api/requests/:id', requireApiLogin, asyncHandler(async (req, res) => {
   const action = req.body.action;
-  if (!['approve', 'reject'].includes(action)) {
+  if (!['approve', 'reject', 'cancel'].includes(action)) {
     return res.status(400).json({ message: 'Invalid action.' });
+  }
+
+  // A requester can cancel only their own pending request.
+  if (action === 'cancel') {
+    const [result] = await pool.execute(
+      `UPDATE borrow_requests
+       SET status = 'cancelled'
+       WHERE id = ? AND requester_id = ? AND status = 'pending'`,
+      [req.params.id, req.session.user.id]
+    );
+
+    if (!result.affectedRows) {
+      return res.status(400).json({ message: 'Only a pending request can be cancelled.' });
+    }
+    return res.json({ message: 'Request cancelled.' });
   }
 
   const connection = await pool.getConnection();
