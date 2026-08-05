@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BookSwap</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <nav class="topbar">
+    <div class="nav-inner">
+      <div class="logo light-logo"><span>📖</span> BookSwap</div>
+      <div class="nav-links">
+        <button class="nav-button" data-section="browseSection">Browse</button>
+        <button class="nav-button" data-section="booksSection">My Books</button>
+        <button class="nav-button" data-section="requestsSection">Requests</button>
+        <button class="nav-button" data-section="loansSection">Loans & Fines</button>
+      </div>
+      <div class="user-area">
+        <div>
+          <strong id="userName">Student</strong>
+          <small id="userInfo"></small>
+        </div>
+        <button id="logoutBtn" class="outline-button small">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <p id="message" class="message floating-message"></p>
+
+    <section id="browseSection" class="page-section">
+      <div class="hero">
+        <div>
+          <p class="eyebrow">Explore the community library</p>
+          <h1>Find a book for your next class or weekend.</h1>
+          <p>Search by title, author, category or a word from the description.</p>
+        </div>
+        <div class="book-stat">
+          <strong id="bookCount">0</strong>
+          <span>books available</span>
+        </div>
+      </div>
+
+      <div class="search-panel">
+        <input id="search" type="search" placeholder="Try Clean Code, Fiction, Database...">
+        <button id="searchBtn">Search books</button>
+      </div>
+
+      <div class="quick-searches">
+        <span>Quick search:</span>
+        <button class="quick-search" data-search="Programming">Programming</button>
+        <button class="quick-search" data-search="Academic">Academic</button>
+        <button class="quick-search" data-search="Fiction">Fiction</button>
+        <button class="quick-search" data-search="">All books</button>
+      </div>
+
+      <div id="bookList" class="book-grid"></div>
+    </section>
+
+    <section id="booksSection" class="page-section hidden">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Your collection</p>
+          <h1>Manage My Books</h1>
+          <p>Add a book, then edit or remove it while it is available.</p>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <h2 id="formTitle">Add a New Book</h2>
+        <form id="bookForm">
+          <input id="bookId" type="hidden">
+          <div class="form-grid">
+            <div>
+              <label for="title">Book title</label>
+              <input id="title" type="text" placeholder="Example: Clean Code" required>
+            </div>
+            <div>
+              <label for="author">Author</label>
+              <input id="author" type="text" placeholder="Author name" required>
+            </div>
+            <div>
+              <label for="category">Category</label>
+              <select id="category" required>
+                <option value="">Select category</option>
+                <option>Academic</option>
+                <option>Programming</option>
+                <option>Science</option>
+                <option>Fiction</option>
+                <option>Business</option>
+                <option>Self Development</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div>
+              <label for="condition">Condition</label>
+              <select id="condition" required>
+                <option value="Good">Good</option>
+                <option value="New">New</option>
+                <option value="Fair">Fair</option>
+                <option value="Poor">Poor</option>
+              </select>
+            </div>
+            <div class="full-field">
+              <label for="description">Short description</label>
+              <textarea id="description" placeholder="Write one or two sentences about the book."></textarea>
+            </div>
+          </div>
+          <div class="button-row">
+            <button type="submit">Save book</button>
+            <button type="button" id="cancelEdit" class="secondary hidden">Cancel edit</button>
+          </div>
+        </form>
+      </div>
+
+      <h2 class="list-title">My book list</h2>
+      <div id="myBookList" class="book-grid"></div>
+    </section>
+
+    <section id="requestsSection" class="page-section hidden">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Borrow workflow</p>
+          <h1>Borrow Requests</h1>
+          <p>Approve or reject requests for your books and track the requests you sent.</p>
+        </div>
+      </div>
+
+      <div class="two-columns">
+        <div>
+          <h2>Requests for my books</h2>
+          <div id="incomingList" class="stack"></div>
+        </div>
+        <div>
+          <h2>Requests I sent</h2>
+          <div id="outgoingList" class="stack"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="loansSection" class="page-section hidden">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Due dates and fines</p>
+          <h1>Loans & Fines</h1>
+          <p>The fine is Tk 10 for every day after the due date.</p>
+        </div>
+      </div>
+
+      <div class="two-columns">
+        <div>
+          <h2>Books I borrowed</h2>
+          <div id="borrowedList" class="stack"></div>
+        </div>
+        <div>
+          <h2>Books I lent</h2>
+          <div id="lentList" class="stack"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
