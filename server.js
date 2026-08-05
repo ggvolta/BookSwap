@@ -81,7 +81,10 @@ app.get('/login', sendPage('login.html'));
 app.get('/signup', sendPage('signup.html'));
 app.get('/app', requireLogin, sendPage('app.html'));
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+app.get('/api/health', asyncHandler(async (req, res) => {
+  await pool.execute('SELECT 1');
+  res.json({ status: 'ok', database: 'connected' });
+}));
 
 // SIGNUP
 app.post('/api/signup', asyncHandler(async (req, res) => {
