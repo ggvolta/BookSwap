@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - BookSwap</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="auth-page">
+  <main class="auth-layout">
+    <section class="auth-brand">
+      <div class="brand-mark">📚</div>
+      <p class="eyebrow">Campus book exchange</p>
+      <h1>Share books.<br>Save money.<br>Learn together.</h1>
+      <p>Borrow useful books from other students and lend the books sitting on your shelf.</p>
+      <div class="brand-points">
+        <span>✓ Search available books</span>
+        <span>✓ Send borrow requests</span>
+        <span>✓ Track due dates and fines</span>
+      </div>
+    </section>
+
+    <section class="auth-card">
+      <a class="logo" href="/login"><span>📖</span> BookSwap</a>
+      <h2>Welcome back</h2>
+      <p class="muted">Log in to continue to your account.</p>
+
+      <form id="loginForm">
+        <label for="email">Email address</label>
+        <input id="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password" placeholder="Enter your password" required>
+
+        <button class="full-button" type="submit">Log in</button>
+        <p id="message" class="message"></p>
+      </form>
+
+      <p class="auth-switch">New to BookSwap? <a href="/signup">Create an account</a></p>
+      <div class="demo-note">
+        <strong>Sample owner login</strong>
+        <span>nusrat@bookswap.demo / demo123</span>
+      </div>
+    </section>
+  </main>
+  <script src="/auth.js"></script>
+</body>
+</html>
