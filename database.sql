@@ -1,3 +1,7 @@
+-- BookSwap database setup
+-- Import this file once in phpMyAdmin.
+-- It resets the project database and adds sample users and books.
+
 DROP DATABASE IF EXISTS book_exchange;
 CREATE DATABASE book_exchange CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE book_exchange;
@@ -50,3 +54,20 @@ CREATE TABLE loans (
   FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (borrower_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- Password for both demo users: demo123
+INSERT INTO users (id, name, student_id, department, phone, email, password) VALUES
+(1, 'Nusrat Jahan', 'CSE-2026-001', 'Computer Science and Engineering', '01700000001', 'nusrat@bookswap.demo', '$2b$10$QtO4w7ZP6L2ibt8IwLDnCuv5ixiybOdVg9GQHSgiCVdKRkGEMgEB.'),
+(2, 'Tanvir Ahmed', 'EEE-2026-002', 'Electrical and Electronic Engineering', '01700000002', 'tanvir@bookswap.demo', '$2b$10$QtO4w7ZP6L2ibt8IwLDnCuv5ixiybOdVg9GQHSgiCVdKRkGEMgEB.');
+
+INSERT INTO books (owner_id, title, author, category, book_condition, description) VALUES
+(1, 'Clean Code', 'Robert C. Martin', 'Programming', 'Good', 'A practical guide to writing readable and maintainable software.'),
+(2, 'Database System Concepts', 'Abraham Silberschatz', 'Academic', 'Good', 'Database fundamentals, SQL, normalization and transaction concepts.'),
+(1, 'Introduction to Algorithms', 'Thomas H. Cormen', 'Programming', 'Fair', 'A comprehensive reference for algorithms and data structures.'),
+(2, 'The Alchemist', 'Paulo Coelho', 'Fiction', 'Good', 'A simple and inspiring novel about following personal dreams.'),
+(1, 'Atomic Habits', 'James Clear', 'Self Development', 'New', 'Practical ideas for building good habits and breaking bad ones.'),
+(2, 'The Psychology of Money', 'Morgan Housel', 'Business', 'Good', 'Short lessons about money, behavior and long-term decisions.'),
+(1, 'A Brief History of Time', 'Stephen Hawking', 'Science', 'Fair', 'An accessible introduction to the universe, time and black holes.'),
+(2, '1984', 'George Orwell', 'Fiction', 'Good', 'A classic dystopian novel about surveillance and authoritarian power.'),
+(1, 'English for Today', 'NCTB', 'Academic', 'Good', 'Useful English reading and language practice for students.'),
+(2, 'The Hobbit', 'J. R. R. Tolkien', 'Fiction', 'New', 'A fantasy adventure featuring Bilbo Baggins and a journey to the Lonely Mountain.');
