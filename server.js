@@ -11,6 +11,7 @@ const PORT = Number(process.env.PORT || 3000);
 const LOAN_DAYS = Number(process.env.LOAN_DAYS || 7);
 const FINE_PER_DAY = Number(process.env.FINE_PER_DAY || 10);
 const ALLOWED_BOOK_CONDITIONS = ['New', 'Like New', 'Good', 'Fair'];
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const publicDir = path.join(__dirname, 'public');
 
 app.use(express.json());
@@ -85,6 +86,12 @@ app.post('/api/signup', asyncHandler(async (req, res) => {
   }
   if (password.length < 6) {
     return res.status(400).json({ message: 'Password must be at least 6 characters.' });
+  }
+  if (!EMAIL_PATTERN.test(cleanText(email))) {
+    return res.status(400).json({ message: 'Please enter a valid email address.' });
+  }
+  if (cleanText(name).length > 100 || cleanText(studentId).length > 30 || cleanText(department).length > 100) {
+    return res.status(400).json({ message: 'One or more signup fields are too long.' });
   }
   if (!/^[0-9+\-\s]{10,20}$/.test(cleanText(phone))) {
     return res.status(400).json({ message: 'Please enter a valid phone number.' });
