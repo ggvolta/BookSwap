@@ -48,6 +48,11 @@ function isValidBookCondition(value) {
   return ALLOWED_BOOK_CONDITIONS.includes(cleanText(value));
 }
 
+function parsePositiveId(value) {
+  const id = Number(value);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
 function formatDate(date) {
   return date.toISOString().slice(0, 10);
 }
@@ -191,7 +196,9 @@ app.post('/api/books', requireApiLogin, asyncHandler(async (req, res) => {
 
 // UPDATE a book
 app.put('/api/books/:id', requireApiLogin, asyncHandler(async (req, res) => {
+  const bookId = parsePositiveId(req.params.id);
   const { title, author, category, book_condition, description } = req.body;
+  if (!bookId) return res.status(400).json({ message: 'Invalid book ID.' });
   if (!title || !author || !category || !book_condition) {
     return res.status(400).json({ message: 'All book fields except description are required.' });
   }
@@ -203,7 +210,7 @@ app.put('/api/books/:id', requireApiLogin, asyncHandler(async (req, res) => {
     `UPDATE books
      SET title = ?, author = ?, category = ?, book_condition = ?, description = ?
      WHERE id = ? AND owner_id = ? AND status = 'available'`,
-    [cleanText(title), cleanText(author), cleanText(category), book_condition, cleanText(description), req.params.id, req.session.user.id]
+    [cleanText(title), cleanText(author), cleanText(category), book_condition, cleanText(description), bookId, req.session.user.id]
   );
 
   if (!result.affectedRows) return res.status(400).json({ message: 'Book cannot be edited.' });
@@ -212,9 +219,12 @@ app.put('/api/books/:id', requireApiLogin, asyncHandler(async (req, res) => {
 
 // DELETE a book
 app.delete('/api/books/:id', requireApiLogin, asyncHandler(async (req, res) => {
+  const bookId = parsePositiveId(req.params.id);
+  if (!bookId) return res.status(400).json({ message: 'Invalid book ID.' });
+
   const [result] = await pool.execute(
     "DELETE FROM books WHERE id = ? AND owner_id = ? AND status = 'available'",
-    [req.params.id, req.session.user.id]
+    [bookId, req.session.user.id]
   );
 
   if (!result.affectedRows) return res.status(400).json({ message: 'Book cannot be deleted.' });
@@ -223,8 +233,8 @@ app.delete('/api/books/:id', requireApiLogin, asyncHandler(async (req, res) => {
 
 // CREATE a borrow request
 app.post('/api/requests', requireApiLogin, asyncHandler(async (req, res) => {
-  const bookId = Number(req.body.bookId);
-  if (!Number.isInteger(bookId) || bookId < 1) {
+  const bookId = parsePositiveId(req.body.bookId);
+  if (!bookId) {
     return res.status(400).json({ message: 'Invalid book.' });
   }
 
@@ -281,7 +291,9 @@ app.get('/api/requests', requireApiLogin, asyncHandler(async (req, res) => {
 
 // UPDATE a request: approve, reject or cancel
 app.put('/api/requests/:id', requireApiLogin, asyncHandler(async (req, res) => {
+  const requestId = parsePositiveId(req.params.id);
   const action = req.body.action;
+  if (!requestId) return res.status(400).json({ message: 'Invalid request ID.' });
   if (!['approve', 'reject', 'cancel'].includes(action)) {
     return res.status(400).json({ message: 'Invalid action.' });
   }
@@ -292,7 +304,7 @@ app.put('/api/requests/:id', requireApiLogin, asyncHandler(async (req, res) => {
       `UPDATE borrow_requests
        SET status = 'cancelled'
        WHERE id = ? AND requester_id = ? AND status = 'pending'`,
-      [req.params.id, req.session.user.id]
+      [requestId, req.session.user.id]
     );
 
     if (!result.affectedRows) {
@@ -309,7 +321,7 @@ app.put('/api/requests/:id', requireApiLogin, asyncHandler(async (req, res) => {
        FROM borrow_requests br
        JOIN books b ON b.id = br.book_id
        WHERE br.id = ? FOR UPDATE`,
-      [req.params.id]
+      [requestId]
     );
 
     if (!rows.length || rows[0].owner_id !== req.session.user.id || rows[0].status !== 'pending') {
@@ -318,7 +330,7 @@ app.put('/api/requests/:id', requireApiLogin, asyncHandler(async (req, res) => {
     }
 
     if (action === 'reject') {
-      await connection.execute("UPDATE borrow_requests SET status = 'rejected' WHERE id = ?", [req.params.id]);
+      await connection.execute("UPDATE borrow_requests SET status = 'rejected' WHERE id = ?", [requestId]);
       await connection.commit();
       return res.json({ message: 'Request rejected.' });
     }
@@ -332,10 +344,10 @@ app.put('/api/requests/:id', requireApiLogin, asyncHandler(async (req, res) => {
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + LOAN_DAYS);
 
-    await connection.execute("UPDATE borrow_requests SET status = 'approved' WHERE id = ?", [req.params.id]);
+    await connection.execute("UPDATE borrow_requests SET status = 'approved' WHERE id = ?", [requestId]);
     await connection.execute(
       "UPDATE borrow_requests SET status = 'rejected' WHERE book_id = ? AND id <> ? AND status = 'pending'",
-      [rows[0].book_id, req.params.id]
+      [rows[0].book_id, requestId]
     );
     await connection.execute("UPDATE books SET status = 'borrowed' WHERE id = ?", [rows[0].book_id]);
     await connection.execute(
@@ -391,12 +403,15 @@ app.get('/api/loans', requireApiLogin, asyncHandler(async (req, res) => {
 
 // UPDATE a loan when the borrower returns the book
 app.put('/api/loans/:id/return', requireApiLogin, asyncHandler(async (req, res) => {
+  const loanId = parsePositiveId(req.params.id);
+  if (!loanId) return res.status(400).json({ message: 'Invalid loan ID.' });
+
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
     const [loans] = await connection.execute(
       "SELECT * FROM loans WHERE id = ? AND borrower_id = ? AND status = 'borrowed' FOR UPDATE",
-      [req.params.id, req.session.user.id]
+      [loanId, req.session.user.id]
     );
 
     if (!loans.length) {
@@ -411,7 +426,7 @@ app.put('/api/loans/:id/return', requireApiLogin, asyncHandler(async (req, res) 
 
     await connection.execute(
       "UPDATE loans SET return_date = ?, fine_amount = ?, status = 'returned' WHERE id = ?",
-      [formatDate(today), fine, req.params.id]
+      [formatDate(today), fine, loanId]
     );
     await connection.execute("UPDATE books SET status = 'available' WHERE id = ?", [loans[0].book_id]);
 
