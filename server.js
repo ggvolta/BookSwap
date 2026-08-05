@@ -130,6 +130,78 @@ app.post('/api/logout', requireApiLogin, (req, res) => {
 
 app.get('/api/me', requireApiLogin, (req, res) => res.json(req.session.user));
 
+// READ available books and search them
+app.get('/api/books', requireApiLogin, asyncHandler(async (req, res) => {
+  const search = `%${cleanText(req.query.search)}%`;
+  const [books] = await pool.execute(
+    `SELECT books.*, users.name AS owner_name, users.department AS owner_department
+     FROM books
+     JOIN users ON users.id = books.owner_id
+     WHERE books.status = 'available'
+       AND books.owner_id <> ?
+       AND (
+         books.title LIKE ? OR books.author LIKE ? OR
+         books.category LIKE ? OR books.description LIKE ?
+       )
+     ORDER BY books.id DESC`,
+    [req.session.user.id, search, search, search, search]
+  );
+  res.json(books);
+}));
+
+// READ current user's books
+app.get('/api/my-books', requireApiLogin, asyncHandler(async (req, res) => {
+  const [books] = await pool.execute(
+    'SELECT * FROM books WHERE owner_id = ? ORDER BY id DESC',
+    [req.session.user.id]
+  );
+  res.json(books);
+}));
+
+// CREATE a book
+app.post('/api/books', requireApiLogin, asyncHandler(async (req, res) => {
+  const { title, author, category, book_condition, description } = req.body;
+  if (!title || !author || !category || !book_condition) {
+    return res.status(400).json({ message: 'Title, author, category and condition are required.' });
+  }
+
+  await pool.execute(
+    `INSERT INTO books (owner_id, title, author, category, book_condition, description)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [req.session.user.id, cleanText(title), cleanText(author), cleanText(category), book_condition, cleanText(description)]
+  );
+  res.status(201).json({ message: 'Book added successfully.' });
+}));
+
+// UPDATE a book
+app.put('/api/books/:id', requireApiLogin, asyncHandler(async (req, res) => {
+  const { title, author, category, book_condition, description } = req.body;
+  if (!title || !author || !category || !book_condition) {
+    return res.status(400).json({ message: 'All book fields except description are required.' });
+  }
+
+  const [result] = await pool.execute(
+    `UPDATE books
+     SET title = ?, author = ?, category = ?, book_condition = ?, description = ?
+     WHERE id = ? AND owner_id = ? AND status = 'available'`,
+    [cleanText(title), cleanText(author), cleanText(category), book_condition, cleanText(description), req.params.id, req.session.user.id]
+  );
+
+  if (!result.affectedRows) return res.status(400).json({ message: 'Book cannot be edited.' });
+  res.json({ message: 'Book updated successfully.' });
+}));
+
+// DELETE a book
+app.delete('/api/books/:id', requireApiLogin, asyncHandler(async (req, res) => {
+  const [result] = await pool.execute(
+    "DELETE FROM books WHERE id = ? AND owner_id = ? AND status = 'available'",
+    [req.params.id, req.session.user.id]
+  );
+
+  if (!result.affectedRows) return res.status(400).json({ message: 'Book cannot be deleted.' });
+  res.json({ message: 'Book deleted successfully.' });
+}));
+
 app.use((req, res) => res.status(404).send('Page not found.'));
 
 app.use((error, req, res, next) => {
