@@ -66,6 +66,70 @@ app.get('/app', requireLogin, sendPage('app.html'));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
+// SIGNUP
+app.post('/api/signup', asyncHandler(async (req, res) => {
+  const { name, studentId, department, phone, email, password } = req.body;
+
+  if (!name || !studentId || !department || !phone || !email || !password) {
+    return res.status(400).json({ message: 'Please fill in every field.' });
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ message: 'Password must be at least 6 characters.' });
+  }
+  if (!/^[0-9+\-\s]{10,20}$/.test(cleanText(phone))) {
+    return res.status(400).json({ message: 'Please enter a valid phone number.' });
+  }
+
+  const normalizedEmail = cleanText(email).toLowerCase();
+  const normalizedStudentId = cleanText(studentId).toUpperCase();
+  const [existing] = await pool.execute(
+    'SELECT email, student_id FROM users WHERE email = ? OR student_id = ?',
+    [normalizedEmail, normalizedStudentId]
+  );
+
+  if (existing.some((user) => user.email === normalizedEmail)) {
+    return res.status(409).json({ message: 'Email is already registered.' });
+  }
+  if (existing.some((user) => user.student_id === normalizedStudentId)) {
+    return res.status(409).json({ message: 'Student ID is already registered.' });
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  await pool.execute(
+    `INSERT INTO users (name, student_id, department, phone, email, password)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [cleanText(name), normalizedStudentId, cleanText(department), cleanText(phone), normalizedEmail, passwordHash]
+  );
+
+  res.status(201).json({ message: 'Account created successfully.' });
+}));
+
+// LOGIN
+app.post('/api/login', asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+  const normalizedEmail = cleanText(email).toLowerCase();
+  const [users] = await pool.execute('SELECT * FROM users WHERE email = ?', [normalizedEmail]);
+
+  if (!users.length || !(await bcrypt.compare(password || '', users[0].password))) {
+    return res.status(401).json({ message: 'Wrong email or password.' });
+  }
+
+  req.session.user = {
+    id: users[0].id,
+    name: users[0].name,
+    studentId: users[0].student_id,
+    department: users[0].department,
+    email: users[0].email
+  };
+  res.json({ message: 'Login successful.' });
+}));
+
+app.post('/api/logout', requireApiLogin, (req, res) => {
+  req.session.destroy(() => res.json({ message: 'Logged out.' }));
+});
+
+app.get('/api/me', requireApiLogin, (req, res) => res.json(req.session.user));
+
 app.use((req, res) => res.status(404).send('Page not found.'));
 
 app.use((error, req, res, next) => {
