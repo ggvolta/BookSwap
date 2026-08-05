@@ -35,3 +35,18 @@ CREATE TABLE borrow_requests (
   FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
   FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE loans (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  book_id INT NOT NULL,
+  owner_id INT NOT NULL,
+  borrower_id INT NOT NULL,
+  borrow_date DATE NOT NULL,
+  due_date DATE NOT NULL,
+  return_date DATE NULL,
+  fine_amount DECIMAL(10,2) DEFAULT 0,
+  status ENUM('borrowed', 'returned') DEFAULT 'borrowed',
+  FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
+  FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (borrower_id) REFERENCES users(id) ON DELETE CASCADE
+);
