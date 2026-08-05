@@ -17,10 +17,16 @@ const publicDir = path.join(__dirname, 'public');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
+  name: 'bookswap.sid',
   secret: process.env.SESSION_SECRET || 'simple-book-secret',
   resave: false,
   saveUninitialized: false,
-  cookie: { httpOnly: true, sameSite: 'lax', maxAge: 24 * 60 * 60 * 1000 }
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000
+  }
 }));
 
 function requireLogin(req, res, next) {
