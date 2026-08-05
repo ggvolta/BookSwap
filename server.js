@@ -463,10 +463,15 @@ app.put('/api/loans/:id/return', requireApiLogin, asyncHandler(async (req, res) 
   }
 }));
 
-app.use((req, res) => res.status(404).send('Page not found.'));
+app.use((req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ message: 'API endpoint not found.' });
+  }
+  res.status(404).send('Page not found.');
+});
 
 app.use((error, req, res, next) => {
-  console.error(error);
+  console.error(`[${new Date().toISOString()}]`, error);
   if (req.path.startsWith('/api/')) {
     return res.status(500).json({ message: 'Something went wrong on the server.' });
   }
