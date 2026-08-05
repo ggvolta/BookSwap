@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up - BookSwap</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="auth-page signup-page">
+  <main class="auth-layout signup-layout">
+    <section class="auth-brand">
+      <div class="brand-mark">🎓</div>
+      <p class="eyebrow">Student community</p>
+      <h1>Create your BookSwap account.</h1>
+      <p>Your student information helps book owners know who is requesting their books.</p>
+      <div class="brand-points">
+        <span>✓ Add books you can lend</span>
+        <span>✓ Find academic and story books</span>
+        <span>✓ Manage requests in one place</span>
+      </div>
+    </section>
+
+    <section class="auth-card wide-card">
+      <a class="logo" href="/login"><span>📖</span> BookSwap</a>
+      <h2>Student registration</h2>
+      <p class="muted">Fill in the information below to create an account.</p>
+
+      <form id="signupForm">
+        <div class="form-grid">
+          <div>
+            <label for="name">Full name</label>
+            <input id="name" type="text" autocomplete="name" placeholder="Your full name" required>
+          </div>
+          <div>
+            <label for="studentId">Student ID</label>
+            <input id="studentId" type="text" placeholder="Example: CSE-2026-101" required>
+          </div>
+          <div>
+            <label for="department">Department</label>
+            <select id="department" required>
+              <option value="">Select department</option>
+              <option>Computer Science and Engineering</option>
+              <option>Electrical and Electronic Engineering</option>
+              <option>Business Administration</option>
+              <option>English</option>
+              <option>Economics</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="phone">Phone number</label>
+            <input id="phone" type="tel" autocomplete="tel" placeholder="01XXXXXXXXX" required>
+          </div>
+          <div>
+            <label for="email">Email address</label>
+            <input id="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+          </div>
+          <div>
+            <label for="password">Password</label>
+            <input id="password" type="password" autocomplete="new-password" minlength="6" placeholder="At least 6 characters" required>
+          </div>
+          <div class="full-field">
+            <label for="confirmPassword">Confirm password</label>
+            <input id="confirmPassword" type="password" autocomplete="new-password" minlength="6" placeholder="Enter the password again" required>
+          </div>
+        </div>
+
+        <button class="full-button" type="submit">Create account</button>
+        <p id="message" class="message"></p>
+      </form>
+
+      <p class="auth-switch">Already registered? <a href="/login">Log in</a></p>
+    </section>
+  </main>
+  <script src="/auth.js"></script>
+</body>
+</html>
