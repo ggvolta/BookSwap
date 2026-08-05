@@ -202,6 +202,124 @@ app.delete('/api/books/:id', requireApiLogin, asyncHandler(async (req, res) => {
   res.json({ message: 'Book deleted successfully.' });
 }));
 
+// CREATE a borrow request
+app.post('/api/requests', requireApiLogin, asyncHandler(async (req, res) => {
+  const bookId = Number(req.body.bookId);
+  if (!Number.isInteger(bookId) || bookId < 1) {
+    return res.status(400).json({ message: 'Invalid book.' });
+  }
+
+  const [books] = await pool.execute(
+    "SELECT * FROM books WHERE id = ? AND status = 'available'",
+    [bookId]
+  );
+
+  if (!books.length) return res.status(404).json({ message: 'Book is not available.' });
+  if (books[0].owner_id === req.session.user.id) {
+    return res.status(400).json({ message: 'You cannot request your own book.' });
+  }
+
+  const [existing] = await pool.execute(
+    "SELECT id FROM borrow_requests WHERE book_id = ? AND requester_id = ? AND status = 'pending'",
+    [bookId, req.session.user.id]
+  );
+  if (existing.length) return res.status(409).json({ message: 'Request already sent.' });
+
+  await pool.execute(
+    'INSERT INTO borrow_requests (book_id, requester_id) VALUES (?, ?)',
+    [bookId, req.session.user.id]
+  );
+  res.status(201).json({ message: 'Borrow request sent.' });
+}));
+
+// READ incoming and outgoing requests
+app.get('/api/requests', requireApiLogin, asyncHandler(async (req, res) => {
+  const [incoming] = await pool.execute(
+    `SELECT br.id, br.status, br.created_at, b.title,
+            u.name AS requester_name, u.student_id AS requester_student_id,
+            u.department AS requester_department, u.phone AS requester_phone
+     FROM borrow_requests br
+     JOIN books b ON b.id = br.book_id
+     JOIN users u ON u.id = br.requester_id
+     WHERE b.owner_id = ?
+     ORDER BY br.id DESC`,
+    [req.session.user.id]
+  );
+
+  const [outgoing] = await pool.execute(
+    `SELECT br.id, br.status, br.created_at, b.title,
+            u.name AS owner_name, u.department AS owner_department
+     FROM borrow_requests br
+     JOIN books b ON b.id = br.book_id
+     JOIN users u ON u.id = b.owner_id
+     WHERE br.requester_id = ?
+     ORDER BY br.id DESC`,
+    [req.session.user.id]
+  );
+
+  res.json({ incoming, outgoing });
+}));
+
+// UPDATE a request: approve or reject
+app.put('/api/requests/:id', requireApiLogin, asyncHandler(async (req, res) => {
+  const action = req.body.action;
+  if (!['approve', 'reject'].includes(action)) {
+    return res.status(400).json({ message: 'Invalid action.' });
+  }
+
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [rows] = await connection.execute(
+      `SELECT br.*, b.owner_id, b.status AS book_status
+       FROM borrow_requests br
+       JOIN books b ON b.id = br.book_id
+       WHERE br.id = ? FOR UPDATE`,
+      [req.params.id]
+    );
+
+    if (!rows.length || rows[0].owner_id !== req.session.user.id || rows[0].status !== 'pending') {
+      await connection.rollback();
+      return res.status(400).json({ message: 'Request cannot be changed.' });
+    }
+
+    if (action === 'reject') {
+      await connection.execute("UPDATE borrow_requests SET status = 'rejected' WHERE id = ?", [req.params.id]);
+      await connection.commit();
+      return res.json({ message: 'Request rejected.' });
+    }
+
+    if (rows[0].book_status !== 'available') {
+      await connection.rollback();
+      return res.status(400).json({ message: 'Book is no longer available.' });
+    }
+
+    const borrowDate = new Date();
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + LOAN_DAYS);
+
+    await connection.execute("UPDATE borrow_requests SET status = 'approved' WHERE id = ?", [req.params.id]);
+    await connection.execute(
+      "UPDATE borrow_requests SET status = 'rejected' WHERE book_id = ? AND id <> ? AND status = 'pending'",
+      [rows[0].book_id, req.params.id]
+    );
+    await connection.execute("UPDATE books SET status = 'borrowed' WHERE id = ?", [rows[0].book_id]);
+    await connection.execute(
+      `INSERT INTO loans (book_id, owner_id, borrower_id, borrow_date, due_date)
+       VALUES (?, ?, ?, ?, ?)`,
+      [rows[0].book_id, rows[0].owner_id, rows[0].requester_id, formatDate(borrowDate), formatDate(dueDate)]
+    );
+
+    await connection.commit();
+    res.json({ message: 'Request approved and loan created.' });
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}));
+
 app.use((req, res) => res.status(404).send('Page not found.'));
 
 app.use((error, req, res, next) => {
