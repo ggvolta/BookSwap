@@ -10,6 +10,7 @@ const app = express();
 const PORT = Number(process.env.PORT || 3000);
 const LOAN_DAYS = Number(process.env.LOAN_DAYS || 7);
 const FINE_PER_DAY = Number(process.env.FINE_PER_DAY || 10);
+const ALLOWED_BOOK_CONDITIONS = ['New', 'Like New', 'Good', 'Fair'];
 const publicDir = path.join(__dirname, 'public');
 
 app.use(express.json());
@@ -41,6 +42,10 @@ function asyncHandler(handler) {
 
 function cleanText(value) {
   return String(value || '').trim();
+}
+
+function isValidBookCondition(value) {
+  return ALLOWED_BOOK_CONDITIONS.includes(cleanText(value));
 }
 
 function formatDate(date) {
@@ -172,6 +177,9 @@ app.post('/api/books', requireApiLogin, asyncHandler(async (req, res) => {
   if (!title || !author || !category || !book_condition) {
     return res.status(400).json({ message: 'Title, author, category and condition are required.' });
   }
+  if (!isValidBookCondition(book_condition)) {
+    return res.status(400).json({ message: 'Please select a valid book condition.' });
+  }
 
   await pool.execute(
     `INSERT INTO books (owner_id, title, author, category, book_condition, description)
@@ -186,6 +194,9 @@ app.put('/api/books/:id', requireApiLogin, asyncHandler(async (req, res) => {
   const { title, author, category, book_condition, description } = req.body;
   if (!title || !author || !category || !book_condition) {
     return res.status(400).json({ message: 'All book fields except description are required.' });
+  }
+  if (!isValidBookCondition(book_condition)) {
+    return res.status(400).json({ message: 'Please select a valid book condition.' });
   }
 
   const [result] = await pool.execute(
