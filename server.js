@@ -320,6 +320,77 @@ app.put('/api/requests/:id', requireApiLogin, asyncHandler(async (req, res) => {
   }
 }));
 
+// READ borrowed and lent books
+app.get('/api/loans', requireApiLogin, asyncHandler(async (req, res) => {
+  const [borrowed] = await pool.execute(
+    `SELECT l.*, b.title, u.name AS owner_name, u.phone AS owner_phone
+     FROM loans l
+     JOIN books b ON b.id = l.book_id
+     JOIN users u ON u.id = l.owner_id
+     WHERE l.borrower_id = ?
+     ORDER BY l.id DESC`,
+    [req.session.user.id]
+  );
+
+  const [lent] = await pool.execute(
+    `SELECT l.*, b.title, u.name AS borrower_name, u.phone AS borrower_phone
+     FROM loans l
+     JOIN books b ON b.id = l.book_id
+     JOIN users u ON u.id = l.borrower_id
+     WHERE l.owner_id = ?
+     ORDER BY l.id DESC`,
+    [req.session.user.id]
+  );
+
+  const withCurrentFine = borrowed.map((loan) => {
+    const dueDate = formatDate(new Date(loan.due_date));
+    const lateDays = loan.status === 'borrowed' ? calculateLateDays(dueDate) : 0;
+    return {
+      ...loan,
+      late_days: lateDays,
+      current_fine: loan.status === 'borrowed' ? lateDays * FINE_PER_DAY : Number(loan.fine_amount)
+    };
+  });
+
+  res.json({ borrowed: withCurrentFine, lent, finePerDay: FINE_PER_DAY });
+}));
+
+// UPDATE a loan when the borrower returns the book
+app.put('/api/loans/:id/return', requireApiLogin, asyncHandler(async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [loans] = await connection.execute(
+      "SELECT * FROM loans WHERE id = ? AND borrower_id = ? AND status = 'borrowed' FOR UPDATE",
+      [req.params.id, req.session.user.id]
+    );
+
+    if (!loans.length) {
+      await connection.rollback();
+      return res.status(400).json({ message: 'Loan cannot be returned.' });
+    }
+
+    const today = new Date();
+    const dueDate = formatDate(new Date(loans[0].due_date));
+    const lateDays = calculateLateDays(dueDate, today);
+    const fine = lateDays * FINE_PER_DAY;
+
+    await connection.execute(
+      "UPDATE loans SET return_date = ?, fine_amount = ?, status = 'returned' WHERE id = ?",
+      [formatDate(today), fine, req.params.id]
+    );
+    await connection.execute("UPDATE books SET status = 'available' WHERE id = ?", [loans[0].book_id]);
+
+    await connection.commit();
+    res.json({ message: `Book returned. Final fine: Tk ${fine}` });
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}));
+
 app.use((req, res) => res.status(404).send('Page not found.'));
 
 app.use((error, req, res, next) => {
