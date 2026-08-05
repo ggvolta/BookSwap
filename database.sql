@@ -12,3 +12,16 @@ CREATE TABLE users (
   password VARCHAR(255) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE books (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  owner_id INT NOT NULL,
+  title VARCHAR(150) NOT NULL,
+  author VARCHAR(120) NOT NULL,
+  category VARCHAR(80) NOT NULL,
+  book_condition VARCHAR(30) NOT NULL,
+  description TEXT,
+  status ENUM('available', 'borrowed') DEFAULT 'available',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
+);
