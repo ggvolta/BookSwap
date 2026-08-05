@@ -25,3 +25,13 @@ CREATE TABLE books (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE borrow_requests (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  book_id INT NOT NULL,
+  requester_id INT NOT NULL,
+  status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
+  FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE
+);
