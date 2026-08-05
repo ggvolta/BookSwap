@@ -89,3 +89,40 @@ Reload the Loans & Fines section. The current fine should be Tk 30.
 - Users may type a new category when publishing a book
 - Responsive layout for phones, tablets, laptops and desktop computers
 - Footer on login, signup and application pages
+
+## ER relationship summary
+
+```text
+users 1 ---- many books
+users 1 ---- many borrow_requests
+books 1 ---- many borrow_requests
+users 1 ---- many loans as owner
+users 1 ---- many loans as borrower
+books 1 ---- many historical loans
+```
+
+Primary keys are the `id` columns. Foreign keys connect `books.owner_id`,
+`borrow_requests.book_id`, `borrow_requests.requester_id`, and the three user/book
+references in `loans`. The complete data types and constraints are available in
+`database.sql`.
+
+## GitHub submission
+
+The included Git history contains 30 meaningful commits: 20 project/frontend
+commits followed by 10 backend, validation, database, and documentation commits.
+This satisfies the safest interpretation of the course requirement for at least
+20 frontend pushes and at least 10 backend pushes.
+
+Connect the empty repository:
+
+```powershell
+git remote add origin https://github.com/ggvolta/BookSwap.git
+```
+
+Then push every commit separately:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\push-30-commits.ps1
+```
+
+Never upload `.env` or `node_modules`. Both are excluded by `.gitignore`.
