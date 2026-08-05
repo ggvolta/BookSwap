@@ -27,6 +27,10 @@ CREATE TABLE books (
   description TEXT,
   status ENUM('available', 'borrowed') DEFAULT 'available',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_books_owner (owner_id),
+  INDEX idx_books_status (status),
+  INDEX idx_books_category (category),
+  INDEX idx_books_title (title),
   FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -36,6 +40,8 @@ CREATE TABLE borrow_requests (
   requester_id INT NOT NULL,
   status ENUM('pending', 'approved', 'rejected', 'cancelled') DEFAULT 'pending',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_requests_book_status (book_id, status),
+  INDEX idx_requests_requester (requester_id),
   FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
   FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -50,6 +56,9 @@ CREATE TABLE loans (
   return_date DATE NULL,
   fine_amount DECIMAL(10,2) DEFAULT 0,
   status ENUM('borrowed', 'returned') DEFAULT 'borrowed',
+  INDEX idx_loans_borrower_status (borrower_id, status),
+  INDEX idx_loans_owner_status (owner_id, status),
+  INDEX idx_loans_due_date (due_date),
   FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
   FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (borrower_id) REFERENCES users(id) ON DELETE CASCADE
