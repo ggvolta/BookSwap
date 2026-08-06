@@ -29,7 +29,7 @@ $commits = @(git rev-list --reverse HEAD)
 $number = 1
 
 foreach ($commit in $commits) {
-    Write-Host "Pushing commit $number of $expectedCommits: $commit"
+    Write-Host ("Pushing commit {0} of {1}: {2}" -f $number, $expectedCommits, $commit)
     git push origin "${commit}:refs/heads/main"
     if ($LASTEXITCODE -ne 0) {
         throw "Push $number failed. Fix the error, then run the script again."
