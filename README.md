@@ -1,4 +1,4 @@
-# BookSwap Minimal
+# BookSwap
 
 A simple campus Book Exchange and Borrowing System built with HTML, CSS, JavaScript, Node.js, Express and MySQL.
 
